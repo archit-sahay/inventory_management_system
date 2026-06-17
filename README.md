@@ -13,6 +13,19 @@ and order-time business rules.
 
 ---
 
+## 🔗 Live demo
+
+| | URL |
+| --- | --- |
+| **Frontend** (Vercel) | https://inventory-management-system-lyart-zeta.vercel.app |
+| **Backend API** (Render) | https://ims-backend-wins.onrender.com |
+| **API docs** (Swagger) | https://ims-backend-wins.onrender.com/docs |
+
+> The backend runs on Render's free tier, which **spins down after inactivity** —
+> the first request may take ~50s to wake it (subsequent requests are instant).
+
+---
+
 ## ✨ Features
 
 - **Dashboard** — totals for products, customers, orders, revenue + low-stock alerts.
@@ -316,8 +329,8 @@ hardcoded. See `.env.example` (root), `backend/.env.example`, and
 - [x] Backend Dockerfile + frontend Dockerfile + `.dockerignore` files
 - [x] `docker-compose.yml` (frontend + backend + Postgres, named volume)
 - [x] Environment-variable configuration (no hardcoded credentials)
-- [ ] GitHub repository link
-- [ ] Docker Hub image link (backend)
-- [ ] Live frontend URL (Vercel/Netlify)
-- [ ] Live backend URL (Render/Railway/Fly.io)
+- [x] GitHub repository — https://github.com/archit-sahay/inventory_management_system
+- [ ] Docker Hub image link (backend) — *pending*
+- [x] Live frontend URL — https://inventory-management-system-lyart-zeta.vercel.app
+- [x] Live backend URL — https://ims-backend-wins.onrender.com
 ```
