@@ -28,6 +28,33 @@ and order-time business rules.
 
 ---
 
+## 🌟 Beyond the brief — enhancements I added on my own
+
+These were **not** part of the assessment requirements. I added them because
+they make the system meaningfully more useful and production-minded:
+
+- **Activity Log (my own idea).** When an order is cancelled it is deleted, and
+  by default that history just vanishes — which is risky for an inventory system
+  where you need accountability. So I designed a persistent, **read-only audit
+  trail** (`GET /activity` + an Activity Log page) that records every order
+  *placed* and *cancelled* with a snapshot of the customer, items and amount.
+  It is stored independently of the `orders` table (no foreign key), so the log
+  **survives even after the order row is deleted**.
+- **Auto-refreshing lists.** Product / order / customer / dashboard views
+  refetch automatically when the browser tab regains focus, plus a manual
+  **Refresh** button — so the UI never shows stale stock after a change made in
+  another tab or via the API.
+- **Stock restoration on cancellation.** Cancelling an order returns its units
+  to inventory, keeping stock counts honest.
+
+> **Note on data & order IDs.** No order data is committed to this repository.
+> The database is created fresh in every environment (a local Docker volume, or
+> the managed Postgres in production). Only products and customers are seeded
+> (when `SEED_ON_STARTUP=true`); **orders and activity start empty, so order IDs
+> begin at #1 on every fresh deployment.**
+
+---
+
 ## 🧱 Project structure
 
 ```
