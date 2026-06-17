@@ -1,0 +1,63 @@
+# Inventory & Order Management System — full stack orchestration.
+# Bring everything up with:  docker compose up --build
+# All credentials/config come from the .env file (copy from .env.example).
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ims_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ims}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ims_password}
+      POSTGRES_DB: ${POSTGRES_DB:-ims}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ims} -d ${POSTGRES_DB:-ims}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    # Not published to the host by default — only the backend needs it.
+    expose:
+      - "5432"
+
+  backend:
+    build:
+      context: ./backend
+    container_name: ims_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-ims}:${POSTGRES_PASSWORD:-ims_password}@db:5432/${POSTGRES_DB:-ims}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      LOW_STOCK_THRESHOLD: ${LOW_STOCK_THRESHOLD:-10}
+      SEED_ON_STARTUP: ${SEED_ON_STARTUP:-true}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Browser talks to the backend via the host-published port, so this
+        # points at localhost:8000, not the internal docker hostname.
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    container_name: ims_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+
+volumes:
+  pgdata:
+    driver: local
