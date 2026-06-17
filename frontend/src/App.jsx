@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard.jsx";
 import Products from "./pages/Products.jsx";
 import Customers from "./pages/Customers.jsx";
 import Orders from "./pages/Orders.jsx";
+import ActivityLog from "./pages/ActivityLog.jsx";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="products" element={<Products />} />
         <Route path="customers" element={<Customers />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="activity" element={<ActivityLog />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

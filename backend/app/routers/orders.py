@@ -111,11 +111,15 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
     db.add(order)
 
     total = Decimal("0.00")
+    item_count = 0
+    summary_parts: list[str] = []
     for product_id, qty in requested.items():
         product = products[product_id]
         unit_price = Decimal(product.price)
         subtotal = unit_price * qty
         total += subtotal
+        item_count += qty
+        summary_parts.append(f"{qty}× {product.name}")
         product.quantity_in_stock -= qty
         order.items.append(
             models.OrderItem(
@@ -127,6 +131,19 @@ def create_order(payload: schemas.OrderCreate, db: Session = Depends(get_db)):
         )
 
     order.total_amount = total
+    db.flush()  # assign order.id before recording the activity event
+
+    db.add(
+        models.OrderEvent(
+            event_type="placed",
+            order_id=order.id,
+            customer_id=customer.id,
+            customer_name=customer.full_name,
+            total_amount=total,
+            item_count=item_count,
+            items_summary=", ".join(summary_parts),
+        )
+    )
     db.commit()
 
     return _serialize_order(_load_order_or_404(db, order.id))
@@ -160,8 +177,30 @@ def get_order(order_id: int, db: Session = Depends(get_db)):
     responses={404: {"model": schemas.ErrorResponse}},
 )
 def delete_order(order_id: int, db: Session = Depends(get_db)):
-    """Cancel/delete an order and restore the stock it had reserved."""
+    """Cancel/delete an order and restore the stock it had reserved.
+
+    A snapshot is written to the activity log before the order row is removed,
+    so cancellations remain auditable.
+    """
     order = _load_order_or_404(db, order_id)
+
+    item_count = sum(item.quantity for item in order.items)
+    summary = ", ".join(
+        f"{item.quantity}× {item.product.name if item.product else f'Product {item.product_id}'}"
+        for item in order.items
+    )
+    db.add(
+        models.OrderEvent(
+            event_type="cancelled",
+            order_id=order.id,
+            customer_id=order.customer_id,
+            customer_name=order.customer.full_name if order.customer else None,
+            total_amount=order.total_amount,
+            item_count=item_count,
+            items_summary=summary,
+        )
+    )
+
     for item in order.items:
         product = db.get(models.Product, item.product_id)
         if product is not None:

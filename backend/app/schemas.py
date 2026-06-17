@@ -104,6 +104,23 @@ class OrderOut(BaseModel):
 
 
 # --------------------------------------------------------------------------- #
+# Activity log
+# --------------------------------------------------------------------------- #
+class OrderEventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    event_type: str  # "placed" | "cancelled"
+    order_id: int
+    customer_id: int | None = None
+    customer_name: str | None = None
+    total_amount: Decimal
+    item_count: int
+    items_summary: str | None = None
+    created_at: datetime
+
+
+# --------------------------------------------------------------------------- #
 # Dashboard
 # --------------------------------------------------------------------------- #
 class LowStockProduct(BaseModel):

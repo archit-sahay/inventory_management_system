@@ -109,3 +109,25 @@ def test_dashboard_summary(client):
     for key in ("total_products", "total_customers", "total_orders", "total_revenue", "low_stock_products"):
         assert key in body
     assert body["low_stock_threshold"] == 10
+
+
+def test_activity_log_records_placed_and_cancelled(client):
+    p = client.post("/products", json={"name": "Logged Item", "sku": "LOG-1", "price": 10.0, "quantity_in_stock": 20}).json()
+    c = client.post("/customers", json={"full_name": "Logger", "email": "logger@example.com"}).json()
+
+    # Placing an order writes a "placed" event. Filter by this test's unique
+    # customer (SQLite reuses order ids across tests; Postgres would not).
+    order = client.post("/orders", json={"customer_id": c["id"], "items": [{"product_id": p["id"], "quantity": 4}]}).json()
+    placed = [a for a in client.get("/activity").json() if a["customer_id"] == c["id"] and a["event_type"] == "placed"]
+    assert len(placed) == 1
+    assert placed[0]["customer_name"] == "Logger"
+    assert placed[0]["item_count"] == 4
+    assert "Logged Item" in placed[0]["items_summary"]
+
+    # Cancelling writes a "cancelled" event AND the log survives order deletion.
+    assert client.delete(f"/orders/{order['id']}").status_code == 204
+    assert client.get(f"/orders/{order['id']}").status_code == 404  # order gone
+    cancelled = [a for a in client.get("/activity").json() if a["customer_id"] == c["id"] and a["event_type"] == "cancelled"]
+    assert len(cancelled) == 1
+    assert cancelled[0]["item_count"] == 4
+    assert "Logged Item" in cancelled[0]["items_summary"]

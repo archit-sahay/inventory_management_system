@@ -59,6 +59,11 @@ export const OrdersAPI = {
   remove: (id) => api.delete(`/orders/${id}`),
 };
 
+// ---- Activity log -------------------------------------------------------- //
+export const ActivityAPI = {
+  list: () => api.get("/activity").then((r) => r.data),
+};
+
 // ---- Dashboard ----------------------------------------------------------- //
 export const DashboardAPI = {
   summary: () => api.get("/dashboard/summary").then((r) => r.data),

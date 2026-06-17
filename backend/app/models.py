@@ -97,3 +97,25 @@ class OrderItem(Base):
 
     order: Mapped["Order"] = relationship(back_populates="items")
     product: Mapped["Product"] = relationship(back_populates="order_items")
+
+
+class OrderEvent(Base):
+    """Append-only audit trail for order activity.
+
+    Deliberately has NO foreign key to ``orders``: an order row is removed when
+    it is cancelled, but its log entry must survive. All human-relevant fields
+    are denormalized snapshots taken at the moment of the event so the log
+    stays meaningful even after the order/customer is deleted.
+    """
+    __tablename__ = "order_events"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    event_type: Mapped[str] = mapped_column(String(20), nullable=False)  # "placed" | "cancelled"
+    order_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    customer_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    customer_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    total_amount: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False, default=0)
+    item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    items_summary: Mapped[str | None] = mapped_column(String(1000), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

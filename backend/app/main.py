@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 
 from .config import get_settings
 from .database import Base, SessionLocal, engine
-from .routers import customers, dashboard, orders, products
+from .routers import activity, customers, dashboard, orders, products
 
 logger = logging.getLogger("ims")
 logging.basicConfig(level=logging.INFO)
@@ -105,4 +105,5 @@ def health():
 app.include_router(products.router)
 app.include_router(customers.router)
 app.include_router(orders.router)
+app.include_router(activity.router)
 app.include_router(dashboard.router)

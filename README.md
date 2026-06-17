@@ -20,8 +20,10 @@ and order-time business rules.
 - **Customers** — create/list/delete with unique-email enforcement.
 - **Orders** — multi-line orders, live total preview, server-side total calculation,
   inventory validation, automatic stock reduction, and stock restoration on cancel.
-- **Responsive UI** — works on desktop and mobile, with form validation and
-  clear success/error toasts.
+- **Activity Log** — read-only audit trail of every order placed and cancelled, with
+  snapshotted details (customer, items, amount) that survive order deletion.
+- **Responsive UI** — works on desktop and mobile, with form validation,
+  auto-refresh on tab focus, and clear success/error toasts.
 - **Interactive API docs** — Swagger UI at `/docs`, ReDoc at `/redoc`.
 
 ---
@@ -38,7 +40,7 @@ ims/
 │   │   ├── models.py        # ORM models + DB constraints
 │   │   ├── schemas.py       # Pydantic request/response validation
 │   │   ├── seed.py          # optional demo data
-│   │   └── routers/         # products, customers, orders, dashboard
+│   │   └── routers/         # products, customers, orders, activity, dashboard
 │   ├── tests/               # pytest API tests (CRUD + business rules)
 │   ├── Dockerfile           # slim, non-root, production-ready
 │   ├── .dockerignore
@@ -48,7 +50,7 @@ ims/
 │   ├── src/
 │   │   ├── api/client.js     # Axios client + error normalization
 │   │   ├── components/       # Layout, Modal, Toast, StatCard, ...
-│   │   └── pages/            # Dashboard, Products, Customers, Orders
+│   │   └── pages/            # Dashboard, Products, Customers, Orders, ActivityLog
 │   ├── Dockerfile           # multi-stage build → nginx
 │   ├── nginx.conf           # SPA routing + gzip
 │   ├── vercel.json          # Vercel SPA config
@@ -161,6 +163,11 @@ Base URL: `http://localhost:8000` (or your deployed backend URL).
 | `GET` | `/orders` | List all orders |
 | `GET` | `/orders/{id}` | Get one order with line items |
 | `DELETE` | `/orders/{id}` | Cancel an order (restores stock) → `204` |
+
+### Activity log
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| `GET` | `/activity` | Read-only audit log of order events (placed / cancelled) |
 
 ### Dashboard / Health
 | Method | Path | Description |

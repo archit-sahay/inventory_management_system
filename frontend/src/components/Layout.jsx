@@ -6,6 +6,7 @@ const NAV = [
   { to: "/products", label: "Products", icon: "📦" },
   { to: "/customers", label: "Customers", icon: "👥" },
   { to: "/orders", label: "Orders", icon: "🧾" },
+  { to: "/activity", label: "Activity Log", icon: "📜" },
 ];
 
 const TITLES = {
@@ -13,6 +14,7 @@ const TITLES = {
   "/products": "Products",
   "/customers": "Customers",
   "/orders": "Orders",
+  "/activity": "Activity Log",
 };
 
 export default function Layout() {
