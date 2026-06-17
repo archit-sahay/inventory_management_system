@@ -4,6 +4,7 @@ import Modal from "../components/Modal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import Spinner from "../components/Spinner.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { useRefreshOnFocus } from "../hooks/useRefreshOnFocus.js";
 
 const money = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -23,17 +24,31 @@ export default function Products() {
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
-  const load = () => {
-    setLoading(true);
+  const load = ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     ProductsAPI.list()
       .then(setProducts)
       .catch((e) => toast.error(extractError(e)))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
   };
 
-  useEffect(load, []);
+  const refresh = () => {
+    setRefreshing(true);
+    load({ silent: true });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  // Keep the list fresh when returning to the tab (e.g. after placing an order).
+  useRefreshOnFocus(() => load({ silent: true }));
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -134,6 +149,9 @@ export default function Products() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button className="btn btn--ghost" onClick={refresh} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "↻ Refresh"}
+            </button>
             <button className="btn btn--primary" onClick={openCreate}>
               + Add Product
             </button>

@@ -4,6 +4,7 @@ import { DashboardAPI, extractError } from "../api/client.js";
 import StatCard from "../components/StatCard.jsx";
 import Spinner from "../components/Spinner.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { useRefreshOnFocus } from "../hooks/useRefreshOnFocus.js";
 
 const money = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -13,14 +14,30 @@ const money = (v) =>
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
-  useEffect(() => {
+  const load = ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     DashboardAPI.summary()
       .then(setData)
       .catch((e) => toast.error(extractError(e)))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
+  };
+
+  const refresh = () => {
+    setRefreshing(true);
+    load({ silent: true });
+  };
+
+  useEffect(() => {
+    load();
   }, []);
+
+  useRefreshOnFocus(() => load({ silent: true }));
 
   if (loading) return <Spinner />;
   if (!data)
@@ -66,9 +83,18 @@ export default function Dashboard() {
               (below {data.low_stock_threshold} units)
             </span>
           </div>
-          <Link to="/products" className="btn btn--ghost btn--sm">
-            Manage products →
-          </Link>
+          <div className="page-actions">
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={refresh}
+              disabled={refreshing}
+            >
+              {refreshing ? "Refreshing…" : "↻ Refresh"}
+            </button>
+            <Link to="/products" className="btn btn--ghost btn--sm">
+              Manage products →
+            </Link>
+          </div>
         </div>
         {data.low_stock_products.length === 0 ? (
           <div className="empty-state">

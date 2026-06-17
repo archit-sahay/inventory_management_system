@@ -4,6 +4,7 @@ import Modal from "../components/Modal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import Spinner from "../components/Spinner.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { useRefreshOnFocus } from "../hooks/useRefreshOnFocus.js";
 
 const EMPTY = { full_name: "", email: "", phone: "" };
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -17,17 +18,30 @@ export default function Customers() {
   const [saving, setSaving] = useState(false);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
-  const load = () => {
-    setLoading(true);
+  const load = ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     CustomersAPI.list()
       .then(setCustomers)
       .catch((e) => toast.error(extractError(e)))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
   };
 
-  useEffect(load, []);
+  const refresh = () => {
+    setRefreshing(true);
+    load({ silent: true });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  useRefreshOnFocus(() => load({ silent: true }));
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -96,6 +110,9 @@ export default function Customers() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <button className="btn btn--ghost" onClick={refresh} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "↻ Refresh"}
+            </button>
             <button
               className="btn btn--primary"
               onClick={() => {

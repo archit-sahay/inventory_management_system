@@ -9,6 +9,7 @@ import Modal from "../components/Modal.jsx";
 import ConfirmDialog from "../components/ConfirmDialog.jsx";
 import Spinner from "../components/Spinner.jsx";
 import { useToast } from "../components/Toast.jsx";
+import { useRefreshOnFocus } from "../hooks/useRefreshOnFocus.js";
 
 const money = (v) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
@@ -36,10 +37,11 @@ export default function Orders() {
   const [detail, setDetail] = useState(null);
   const [toDelete, setToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const toast = useToast();
 
-  const load = () => {
-    setLoading(true);
+  const load = ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     Promise.all([OrdersAPI.list(), ProductsAPI.list(), CustomersAPI.list()])
       .then(([o, p, c]) => {
         setOrders(o);
@@ -47,10 +49,22 @@ export default function Orders() {
         setCustomers(c);
       })
       .catch((e) => toast.error(extractError(e)))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
   };
 
-  useEffect(load, []);
+  const refresh = () => {
+    setRefreshing(true);
+    load({ silent: true });
+  };
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  useRefreshOnFocus(() => load({ silent: true }));
 
   const productById = (id) => products.find((p) => String(p.id) === String(id));
 
@@ -138,9 +152,14 @@ export default function Orders() {
       <div className="card">
         <div className="card__header">
           <div className="card__title">Orders ({orders.length})</div>
-          <button className="btn btn--primary" onClick={openCreate}>
-            + Create Order
-          </button>
+          <div className="page-actions">
+            <button className="btn btn--ghost" onClick={refresh} disabled={refreshing}>
+              {refreshing ? "Refreshing…" : "↻ Refresh"}
+            </button>
+            <button className="btn btn--primary" onClick={openCreate}>
+              + Create Order
+            </button>
+          </div>
         </div>
 
         {loading ? (
