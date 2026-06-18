@@ -20,6 +20,7 @@ and order-time business rules.
 | **Frontend** (Vercel) | https://inventory-management-system-lyart-zeta.vercel.app |
 | **Backend API** (Render) | https://ims-backend-wins.onrender.com |
 | **API docs** (Swagger) | https://ims-backend-wins.onrender.com/docs |
+| **Backend image** (Docker Hub) | https://hub.docker.com/r/archits/ims-backend |
 
 > The backend runs on Render's free tier, which **spins down after inactivity** —
 > the first request may take ~50s to wake it (subsequent requests are instant).
@@ -291,14 +292,22 @@ This repo ships a [`render.yaml`](render.yaml) blueprint:
 
 ### 4. Docker Hub (backend image)
 
+The backend image is published to Docker Hub as a **multi-arch** image
+(`linux/amd64` + `linux/arm64`):
+
 ```bash
-cd backend
-docker build -t <dockerhub-user>/ims-backend:latest .
-docker login
-docker push <dockerhub-user>/ims-backend:latest
+docker pull archits/ims-backend:latest
 ```
 
-Image link: `https://hub.docker.com/r/<dockerhub-user>/ims-backend`
+Image: **https://hub.docker.com/r/archits/ims-backend**
+
+To build and push your own:
+
+```bash
+docker login
+docker buildx build --platform linux/amd64,linux/arm64 \
+  -t <dockerhub-user>/ims-backend:latest --push ./backend
+```
 
 ---
 
@@ -330,7 +339,7 @@ hardcoded. See `.env.example` (root), `backend/.env.example`, and
 - [x] `docker-compose.yml` (frontend + backend + Postgres, named volume)
 - [x] Environment-variable configuration (no hardcoded credentials)
 - [x] GitHub repository — https://github.com/archit-sahay/inventory_management_system
-- [ ] Docker Hub image link (backend) — *pending*
+- [x] Docker Hub image (backend) — https://hub.docker.com/r/archits/ims-backend
 - [x] Live frontend URL — https://inventory-management-system-lyart-zeta.vercel.app
 - [x] Live backend URL — https://ims-backend-wins.onrender.com
 ```
